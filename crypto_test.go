@@ -26,7 +26,7 @@ func BenchmarkSHA512With32Bytes(b *testing.B) {
 
 func BenchmarkSHA512With64Bytes(b *testing.B) {
 	b.ReportAllocs()
-	message := []byte("A head full of false imaginings.")
+	message := []byte("Look at your body - A head full of false imaginings - Dhammapada")
 	for n := 0; n < b.N; n++ {
 		SHA512{}.Hash(message)
 	}
