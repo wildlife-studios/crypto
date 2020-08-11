@@ -1,0 +1,4 @@
+include:
+  - project: 'security/ci-templates'
+    file: '/SAST.yml'
+
