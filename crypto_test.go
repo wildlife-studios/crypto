@@ -8,6 +8,16 @@ import (
 	"testing"
 )
 
+var salt []byte = []byte{0xFA, 0x19, 0x29, 0xC4, 0xBD, 0x02, 0x1b, 0xda}
+
+func BenchmarkArgon2With16Bytes(b *testing.B) {
+	b.ReportAllocs()
+	message := []byte("YELLOW SUBMARINE")
+	for n := 0; n < b.N; n++ {
+		Argon2{}.Hash(message, salt)
+	}
+}
+
 func BenchmarkSHA512With16Bytes(b *testing.B) {
 	b.ReportAllocs()
 	message := []byte("YELLOW SUBMARINE")

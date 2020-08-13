@@ -2,8 +2,11 @@ package main
 
 import (
 	"crypto/rand"
+	"crypto/sha512"
 	"encoding/base64"
+	"errors"
 
+	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
@@ -61,4 +64,43 @@ func (Chacha) Decrypt(c Ciphertext, key []byte) ([]byte, error) {
 
 	// Decrypt the message and check it wasn't tampered with.
 	return aead.Open(nil, nonce, msg, nil)
+}
+
+type Hash512 [64]byte
+
+func (c Hash512) Bytes() [64]byte { return c }
+func (c Hash512) Base64() string  { return base64.StdEncoding.EncodeToString(c[:]) }
+
+type SHA512 struct{}
+
+// Hash will give you a hash of your message of exactly 64 bytes using
+// the SHA2 algorithm. This should be used to hash random, uniform data.
+// Examples include UUIDs, random numbers, MAC addresses.
+func (SHA512) Hash(msg []byte) Hash512 {
+	return Hash512(sha512.Sum512(msg))
+}
+
+type Hash256 [32]byte
+
+func (c Hash256) Bytes() [32]byte { return c }
+func (c Hash256) Base64() string  { return base64.StdEncoding.EncodeToString(c[:]) }
+
+type Argon2 struct{}
+
+// Hash will give you a hash of your message of exactly 32 bytes using
+// the Argon2 KDF. This should be used to hash non random data.
+// Examples include user passwords, IPs, geolocations.
+// Keep in mind this function is ~5 orders of magnitude slower than
+// SHA512. A Macbook can process only 73 of these per second.
+// If you can't afford such an slow algorithm for non random data,
+// do NOT use SHA512, contact the application security team at #security-public
+// instead.
+func (Argon2) Hash(txt []byte, salt []byte) (Hash256, error) {
+	var arr [32]byte
+	h := argon2.IDKey(txt, salt, 1, 64*1024, 4, 32)
+	amount := copy(arr[:], h)
+	if amount != 32 {
+		return arr, errors.New("did not copy entire hash into memory")
+	}
+	return Hash256(arr), nil
 }
