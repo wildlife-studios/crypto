@@ -2,7 +2,7 @@
 
 This repository holds the security crypto library for Wildlife.
 
-You can read more about our (Cryptography recommendations at our Wiki)[https://wiki.wildlifestudios.com/display/SPCNPRVCY/How+to+Store+Private+Data]
+You can read more about our [Cryptography recommendations at our Wiki](https://wiki.wildlifestudios.com/display/SPCNPRVCY/How+to+Store+Private+Data)
 
 ## How to use
 The library has extensive documentation. There are three use cases.
