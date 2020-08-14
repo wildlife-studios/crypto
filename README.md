@@ -70,7 +70,7 @@ func Retrieve(id string, storage Storager, vault Vaulter) (string, error) {
 
 #### I promise, promise, promise my data is random
 
-The just use SHA512. It is fast and simple.
+Then just use SHA512. It is fast and simple.
 
 ```
 import "git.topfreegames.com/security/crypto"
