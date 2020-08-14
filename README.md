@@ -111,3 +111,13 @@ func ComparePassword(user, token string, storage Storager) (bool, error) {
      return sha512.Compare([]byte(token), saved)
 }
 ```
+## Benchmarks
+```
+BenchmarkArgon2With16Bytes-12     	      73	  17387010 ns/op	67118640 B/op	      50 allocs/op
+BenchmarkSHA512With16Bytes-12     	 4869639	       239 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSHA512With32Bytes-12     	 5005380	       240 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSHA512With64Bytes-12     	 4914045	       237 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSHA512With128Bytes-12    	 2746240	       435 ns/op	       0 B/op	       0 allocs/op
+BenchmarkChachaEncryption-12      	 3179156	       376 ns/op	     112 B/op	       2 allocs/op
+BenchmarkChachaDecryption-12      	 1860862	       645 ns/op	     496 B/op	       6 allocs/op
+```
