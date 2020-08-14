@@ -99,7 +99,7 @@ of the users.
 ```
 import "git.topfreegames.com/security/crypto"
 
-var argon2 = crypto.MakeSHA512()
+var argon2 = crypto.MakeArgon2()
 
 func HashPassword(user, token string, storage Storager)  {
      hash := argon2.Hash(msg)
