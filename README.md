@@ -32,14 +32,14 @@ import "git.topfreegames.com/security/crypto"
 var cipher = crypto.MakeChacha()
 
 func EncryptAndStore(id, msg string, storage Storager, vault Vaulter) error {
-     // get the key from vault and parse it with the cipher
+     // get the key from vault
      // if possible, leave the key in the stack, but if performance
      // obliges, you can do this one and leave it as a constant
-     key, err := cipher.ReadKey(vault.GetKey())
+     key, err := vault.GetKey()
      if err != nil {
           return errors.New("could not read key")
      }
-     // encrypt
+     // encrypt!
      ciphertext, err := cipher.Encrypt(msg, key)
      if err != nil {
           return errors.New("could not encrypt")
@@ -50,10 +50,10 @@ func EncryptAndStore(id, msg string, storage Storager, vault Vaulter) error {
 
 
 func Retrieve(id string, storage Storager, vault Vaulter) (string, error) {
-     // get the key from vault and parse it with the cipher
+     // get the key from vault
      // if possible, leave the key in the stack, but if performance
      // obliges, you can do this one and leave it as a constant
-     key, err := cipher.ReadKey(vault.GetKey())
+     key, err := vault.GetKey()
      if err != nil {
           return "", errors.New("could not read key")
      }

@@ -6,17 +6,20 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"testing"
 )
 
-func getMeSomeChacha(t *testing.T) (Chacha, []byte) {
-	t.Helper()
+func getMeSomeChacha(t *testing.T) (Chacha, string) {
+	if t != nil {
+		t.Helper()
+	}
 	chacha := MakeChacha()
 	key, err := chacha.newKey()
 	if err != nil {
 		t.Error(err)
 	}
-	return chacha, key
+	return chacha, hex.EncodeToString(key)
 }
 
 func TestComparingArgon2Works(t *testing.T) {
@@ -137,9 +140,8 @@ func BenchmarkSHA512With128Bytes(b *testing.B) {
 func BenchmarkChachaEncryption(t *testing.B) {
 	t.ReportAllocs()
 	message := "123e4567-e89b-12d3-a456-426614174000"
-	cipher := Chacha{}
 	bytes := []byte(message)
-	key, _ := cipher.newKey()
+	cipher, key := getMeSomeChacha(nil)
 	for n := 0; n < t.N; n++ {
 		cipher.Encrypt(bytes, key)
 	}
@@ -149,8 +151,7 @@ func BenchmarkChachaDecryption(t *testing.B) {
 	t.ReportAllocs()
 	message := "123e4567-e89b-12d3-a456-426614174000"
 	bytes := []byte(message)
-	cipher := Chacha{}
-	key, _ := cipher.newKey()
+	cipher, key := getMeSomeChacha(nil)
 	ciphertext, err := cipher.Encrypt(bytes, key)
 	if err != nil {
 		panic(err)

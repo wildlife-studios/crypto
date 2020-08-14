@@ -66,23 +66,18 @@ func (Chacha) newKey() ([]byte, error) {
 	return key, err
 }
 
-// ReadKey will return a byte array from a hexadecimal string.
-// Utility function so you can store a hexstring in a JSON in
-// Vault and pass it to this function to get it formatted
-// the way Chacha likes it.
-func (Chacha) ReadKey(hexadecimal string) ([32]byte, error) {
-	var key [32]byte
-	k, err := hex.DecodeString(hexadecimal)
-	copy(key[:], k)
-	return key, err
-}
-
 // Encrypt will convert a message to a ciphertext which can't be read
 // unless the reader has the key.
 // The key must be stored safely, this generally means using Vault.
-// In any case, the key must be exactly 32 bytes long. If it is not this
-// will return an error in runtime.
-func (Chacha) Encrypt(msg []byte, key []byte) (Ciphertext, error) {
+// The hexkey is expected to be a hexadecimal string of exactly 64 characters (32 bytes)
+func (c Chacha) Encrypt(msg []byte, hexkey string) (Ciphertext, error) {
+	if len(hexkey) != 64 {
+		return Ciphertext(nil), errors.New("wrong key len")
+	}
+	key, err := hex.DecodeString(hexkey)
+	if err != nil {
+		return Ciphertext(nil), err
+	}
 	aead, err := chacha20poly1305.NewX(key)
 	if err != nil {
 		return Ciphertext(nil), err
@@ -101,7 +96,15 @@ func (Chacha) Encrypt(msg []byte, key []byte) (Ciphertext, error) {
 // Decrypt converts a base64-encoded ciphertext back to the plaintext.
 // It will fail if the ciphertext is not correctly with padded base64,
 // if the ciphertext is too short or if the ciphertext has been tampered with.
-func (c Chacha) Decrypt(ciphertext string, key []byte) ([]byte, error) {
+// The hexkey is expected to be a hexadecimal string of exactly 64 characters (32 bytes)
+func (c Chacha) Decrypt(ciphertext string, hexkey string) ([]byte, error) {
+	if len(hexkey) != 64 {
+		return Ciphertext(nil), errors.New("wrong key len")
+	}
+	key, err := hex.DecodeString(hexkey)
+	if err != nil {
+		return Ciphertext(nil), err
+	}
 	cipherBytes, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
 		return nil, errors.New("ciphertext not in base64")
