@@ -101,7 +101,7 @@ import "git.topfreegames.com/security/crypto"
 
 var argon2 = crypto.MakeSHA512()
 
-func HashPasswoed(user, token string, storage Storager)  {
+func HashPassword(user, token string, storage Storager)  {
      hash := argon2.Hash(msg)
      storage.Save(user, hash.Encode())
 }
