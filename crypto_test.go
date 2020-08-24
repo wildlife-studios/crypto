@@ -72,6 +72,22 @@ func TestEncryptAndDecryptWork(t *testing.T) {
 	}
 }
 
+func TestEncryptAndDecryptRawWork(t *testing.T) {
+	chacha, key := getMeSomeChacha(t)
+	text := []byte("something almost, but not quite entirely unlike tea")
+	ciphertext, err := chacha.Encrypt(text, key)
+	if err != nil {
+		t.Error(err)
+	}
+	plain, err := chacha.DecryptRaw(ciphertext.Bytes(), key)
+	if err != nil {
+		t.Error(err)
+	}
+	if bytes.Compare(plain, text) != 0 {
+		t.Errorf("decrypting the cipher text did not result in plain text")
+	}
+}
+
 func TestModifyingCipherTextWithXChachaFails(t *testing.T) {
 	chacha, key := getMeSomeChacha(t)
 	ciphertext, err := chacha.Encrypt([]byte("Nothing going to change"), key)

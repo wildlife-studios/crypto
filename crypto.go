@@ -93,11 +93,11 @@ func (c Chacha) Encrypt(msg []byte, hexkey string) (Ciphertext, error) {
 	return Ciphertext(encryptedMsg), nil
 }
 
-// Decrypt converts a base64-encoded ciphertext back to the plaintext.
-// It will fail if the ciphertext is not correctly with padded base64,
+// DecryptRaw converts a ciphertext back to the plaintext.
+// It will fail if the ciphertext is not well-formed padded base64,
 // if the ciphertext is too short or if the ciphertext has been tampered with.
 // The hexkey is expected to be a hexadecimal string of exactly 64 characters (32 bytes)
-func (c Chacha) Decrypt(ciphertext string, hexkey string) ([]byte, error) {
+func (c Chacha) DecryptRaw(ciphertext []byte, hexkey string) ([]byte, error) {
 	if len(hexkey) != 64 {
 		return Ciphertext(nil), errors.New("wrong key len")
 	}
@@ -105,26 +105,34 @@ func (c Chacha) Decrypt(ciphertext string, hexkey string) ([]byte, error) {
 	if err != nil {
 		return Ciphertext(nil), err
 	}
-	cipherBytes, err := base64.StdEncoding.DecodeString(ciphertext)
-	if err != nil {
-		return nil, errors.New("ciphertext not in base64")
-	}
 	aead, err := chacha20poly1305.NewX(key)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(cipherBytes) < aead.NonceSize() {
+	if len(ciphertext) < aead.NonceSize() {
 		return nil, errors.New("ciphertext too short")
 	}
-	nonce := cipherBytes[:aead.NonceSize()]
-	msg := cipherBytes[aead.NonceSize():]
+	nonce := ciphertext[:aead.NonceSize()]
+	msg := ciphertext[aead.NonceSize():]
 
 	// Decrypt the message and check it wasn't tampered with.
 	return aead.Open(nil, nonce, msg, nil)
 }
 
-// SHAHas represents a SHA2 hash
+// Decrypt converts a base64-encoded ciphertext back to the plaintext.
+// It will fail if the ciphertext is not well-formed padded base64,
+// if the ciphertext is too short or if the ciphertext has been tampered with.
+// The hexkey is expected to be a hexadecimal string of exactly 64 characters (32 bytes)
+func (c Chacha) Decrypt(ciphertext string, hexkey string) ([]byte, error) {
+	cipherBytes, err := base64.StdEncoding.DecodeString(ciphertext)
+	if err != nil {
+		return nil, errors.New("ciphertext not in base64")
+	}
+	return c.DecryptRaw(cipherBytes, hexkey)
+}
+
+// SHAHash represents a SHA2 hash
 type SHAHash []byte
 
 // Bytes returns the raw bytes of the hash
