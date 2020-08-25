@@ -1,5 +1,4 @@
 include:
   - project: 'security/ci-templates'
-    ref: dev
     file: '/SAST.yml'
 
