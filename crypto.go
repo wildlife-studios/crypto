@@ -57,10 +57,9 @@ func (c XChacha) Encrypt(msg []byte, key []byte) ([]byte, error) {
 	return aead.Seal(nonce, nonce, msg, nil), nil
 }
 
-// Decrypt converts a base64-encoded ciphertext back to the plaintext.
-// It will fail if the ciphertext is not well-formed padded base64,
-// if the ciphertext is too short or if the ciphertext has been tampered with.
-// The hexkey is expected to be a hexadecimal string of exactly 64 characters (32 bytes)
+// Decrypt converts a ciphertext back to the plaintext. It will fail
+// if the key is not 32 bytes long, if the ciphertext has been tampered with
+// or if the ciphertext is malformed.
 func (c XChacha) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 	if len(key) != 32 {
 		return nil, fmt.Errorf("wrong key length. expected 32 bytes, got: %d", len(key))
