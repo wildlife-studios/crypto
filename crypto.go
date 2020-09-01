@@ -108,21 +108,21 @@ func (s SHA512) Compare(msg []byte, hash []byte) bool {
 // Key Derivation Functions and are a subset of /ash functions which should be used to
 // hash non-random data, such as passwords, IP addresses or geolocation.
 type Argon2 struct {
-	times    uint32
-	memory   uint32
-	threads  uint8
-	keyLen   uint32
-	saltSize int8
+	iterations uint32
+	memoryKB   uint32
+	threads    uint8
+	keyLen     uint32
+	saltSize   int8
 }
 
 // NewArgon2 will give you an Argon2 to hash your data.
 func NewArgon2() Argon2 {
 	return Argon2{
-		times:    1,
-		memory:   64 * 1024,
-		threads:  4,
-		keyLen:   32,
-		saltSize: 16,
+		iterations: 1,
+		memoryKB:   64 * 1024,
+		threads:    4,
+		keyLen:     32,
+		saltSize:   16,
 	}
 }
 
@@ -134,7 +134,7 @@ func (a Argon2) encode(hash []byte, salt []byte) string {
 	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
 
 	format := "$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s"
-	encoded := fmt.Sprintf(format, argon2.Version, a.memory, a.times, a.threads, b64Salt, b64Hash)
+	encoded := fmt.Sprintf(format, argon2.Version, a.memoryKB, a.iterations, a.threads, b64Salt, b64Hash)
 	return encoded
 }
 
@@ -145,7 +145,7 @@ func (a Argon2) Hash(msg []byte) (string, error) {
 	if _, err := rand.Read(salt); err != nil {
 		return "", err
 	}
-	hash := argon2.IDKey(msg, salt, a.times, a.memory, a.threads, a.keyLen)
+	hash := argon2.IDKey(msg, salt, a.iterations, a.memoryKB, a.threads, a.keyLen)
 	encoded := a.encode(hash, salt)
 	return encoded, nil
 }
@@ -155,7 +155,7 @@ func (a Argon2) Hash(msg []byte) (string, error) {
 func (Argon2) Compare(msg []byte, saved string) (bool, error) {
 	parts := strings.Split(saved, "$")
 	argon := Argon2{}
-	_, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &argon.memory, &argon.times, &argon.threads)
+	_, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &argon.memoryKB, &argon.iterations, &argon.threads)
 	if err != nil {
 		return false, InvalidEncodingError{err}
 	}
@@ -170,6 +170,6 @@ func (Argon2) Compare(msg []byte, saved string) (bool, error) {
 		return false, InvalidEncodingError{err}
 	}
 	argon.keyLen = uint32(len(old))
-	recreated := argon2.IDKey(msg, salt, argon.times, argon.memory, argon.threads, argon.keyLen)
+	recreated := argon2.IDKey(msg, salt, argon.iterations, argon.memoryKB, argon.threads, argon.keyLen)
 	return subtle.ConstantTimeCompare(old, recreated) == 1, nil
 }
