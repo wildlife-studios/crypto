@@ -205,7 +205,9 @@ func decryptAES(encrypted string, key []byte) ([]byte, error) {
 	return plaintext, err
 }
 
-func getMeSomeXChacha(t *testing.T) (XChacha, []byte) {
+// getMeSomeXChacha returns a new *XChacha instance and a key
+// Panics if t == nil.
+func getMeSomeXChacha(t *testing.T) (*XChacha, []byte) {
 	if t != nil {
 		t.Helper()
 	}

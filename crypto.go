@@ -21,8 +21,8 @@ type InvalidEncodingError struct {
 	original error
 }
 
-func (InvalidEncodingError) Error() string {
-	return "can't compare hashes because the saved hash is malformed"
+func (e InvalidEncodingError) Error() string {
+	return fmt.Sprintf("can't compare hashes because the saved hash is malformed: %s", e.original)
 }
 
 func (e InvalidEncodingError) Unwrap() error {
@@ -34,13 +34,13 @@ func (e InvalidEncodingError) Unwrap() error {
 type XChacha struct{}
 
 // NewXChacha gives you a XChacha with which to encrypt your data.
-func NewXChacha() XChacha {
-	return XChacha{}
+func NewXChacha() *XChacha {
+	return &XChacha{}
 }
 
 // Encrypt will convert a message to a ciphertext.
 // The key must be stored safely, this generally means using Vault.
-func (c XChacha) Encrypt(msg []byte, key []byte) ([]byte, error) {
+func (c *XChacha) Encrypt(msg []byte, key []byte) ([]byte, error) {
 	if len(key) != 32 {
 		return nil, fmt.Errorf("wrong key length. expected 32 bytes, got: %d", len(key))
 	}
@@ -60,7 +60,7 @@ func (c XChacha) Encrypt(msg []byte, key []byte) ([]byte, error) {
 // Decrypt converts a ciphertext back to the plaintext. It will fail
 // if the key is not 32 bytes long, if the ciphertext has been tampered with
 // or if the ciphertext is malformed.
-func (c XChacha) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
+func (c *XChacha) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 	if len(key) != 32 {
 		return nil, fmt.Errorf("wrong key length. expected 32 bytes, got: %d", len(key))
 	}
@@ -85,21 +85,23 @@ func (c XChacha) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 type SHA512 struct{}
 
 // NewSHA512 will return a SHA512 struct.
-func NewSHA512() SHA512 {
-	return SHA512{}
+// SHA512 should be used to hash random data.
+// If you need to hash non-random data, please look at Argon2.
+func NewSHA512() *SHA512 {
+	return &SHA512{}
 }
 
 // Hash will give you a hash of your message of exactly 64 bytes using
 // the SHA2 algorithm. This should be used to hash random, uniform data.
 // Examples include UUIDs, random numbers, MAC addresses.
-func (SHA512) Hash(msg []byte) []byte {
+func (*SHA512) Hash(msg []byte) []byte {
 	h := sha512.Sum512(msg)
 	return h[:]
 }
 
 // Compare a message with a hash. Will return true if SHA512(msg) is
 // equal to the hash. Guarantees the comparison to be in constant time.
-func (s SHA512) Compare(msg []byte, hash []byte) bool {
+func (s *SHA512) Compare(msg []byte, hash []byte) bool {
 	recreated := s.Hash(msg)
 	return subtle.ConstantTimeCompare(hash, recreated) == 1
 }
@@ -108,25 +110,28 @@ func (s SHA512) Compare(msg []byte, hash []byte) bool {
 // Key Derivation Functions and are a subset of /ash functions which should be used to
 // hash non-random data, such as passwords, IP addresses or geolocation.
 type Argon2 struct {
-	iterations uint32
-	memoryKB   uint32
-	threads    uint8
-	keyLen     uint32
-	saltSize   int8
+	iterations    uint32
+	memoryKB      uint32
+	threads       uint8
+	keyLen        uint32
+	saltSizeBytes int8
 }
 
 // NewArgon2 will give you an Argon2 to hash your data.
-func NewArgon2() Argon2 {
-	return Argon2{
-		iterations: 1,
-		memoryKB:   64 * 1024,
-		threads:    4,
-		keyLen:     32,
-		saltSize:   16,
+// Argon2 is the algorithm chosen as the Key Derivation Function for Wildlife Studios.
+// Key Derivation Functions and are a subset of /ash functions which should be used to
+// hash non-random data, such as passwords, IP addresses or geolocation.
+func NewArgon2() *Argon2 {
+	return &Argon2{
+		iterations:    1,
+		memoryKB:      64 * 1024,
+		threads:       4,
+		keyLen:        32,
+		saltSizeBytes: 16,
 	}
 }
 
-func (a Argon2) encode(hash []byte, salt []byte) string {
+func (a *Argon2) encode(hash []byte, salt []byte) string {
 	// for some reason the guys at the reference implementation
 	// do not use padding characters. why is anybodies' guess ¯\_(ツ)_/¯
 	// https://github.com/P-H-C/phc-winner-argon2/
@@ -140,8 +145,8 @@ func (a Argon2) encode(hash []byte, salt []byte) string {
 
 // Hash will give you a hash of your message encoded using the reference
 // Argon2 encoding.
-func (a Argon2) Hash(msg []byte) (string, error) {
-	salt := make([]byte, a.saltSize)
+func (a *Argon2) Hash(msg []byte) (string, error) {
+	salt := make([]byte, a.saltSizeBytes)
 	if _, err := rand.Read(salt); err != nil {
 		return "", err
 	}
@@ -152,7 +157,7 @@ func (a Argon2) Hash(msg []byte) (string, error) {
 
 // Compare a message with a hash. Will return true if Argon2(msg) is
 // equal to the hash. Guarantees the comparison to be in constant time.
-func (Argon2) Compare(msg []byte, saved string) (bool, error) {
+func (*Argon2) Compare(msg []byte, saved string) (bool, error) {
 	parts := strings.Split(saved, "$")
 	argon := Argon2{}
 	_, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &argon.memoryKB, &argon.iterations, &argon.threads)
