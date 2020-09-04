@@ -5,7 +5,7 @@ This repository holds the security crypto library for Wildlife.
 You can read more about our [Cryptography recommendations at our Wiki](https://wiki.wildlifestudios.com/display/SPCNPRVCY/How+to+Store+Private+Data)
 
 ## How to use
-The library has extensive documentation. There are three use cases.
+There are three use cases.
 
 * Encryption
 * Hashing random data such as tokens and UUIDs
@@ -29,7 +29,7 @@ Then, in your application, you can use `crypto`
 ```
 import "git.topfreegames.com/security/crypto"
 
-var cipher = crypto.MakeChacha()
+var cipher = crypto.NewXChacha()
 
 func EncryptAndStore(id, msg string, storage Storager, vault Vaulter) error {
      // get the key from vault
@@ -75,7 +75,7 @@ Then just use SHA512. It is fast and simple.
 ```
 import "git.topfreegames.com/security/crypto"
 
-var sha512 = crypto.MakeSHA512()
+var sha512 = crypto.NewSHA512()
 
 func HashToken(user, token string, storage Storager)  {
      hash := sha512.Hash(msg)
@@ -99,7 +99,7 @@ of the users.
 ```
 import "git.topfreegames.com/security/crypto"
 
-var argon2 = crypto.MakeArgon2()
+var argon2 = crypto.NewArgon2()
 
 func HashPassword(user, token string, storage Storager)  {
      hash := argon2.Hash(msg)
