@@ -181,6 +181,22 @@ func (a *Argon2) Hash(msg []byte) (string, error) {
 	return encoded, nil
 }
 
+// HashWithFixedSalt allows you to use Argon2 using a fixed salt.
+// The salt must be exactly 16 bytes long.
+// *WARNING* use only if you are using Argon2 to index encrypted data.
+// Use different salts to index different columns.
+func (a *Argon2) HashWithFixedSalt(msg []byte, salt []byte) (string, error) {
+	if a == nil {
+		a = NewArgon2()
+	}
+	if len(salt) != int(a.saltSizeBytes) {
+		return "", fmt.Errorf("wrong salt size. expected %d, got %d", a.saltSizeBytes, len(salt))
+	}
+	hash := argon2.IDKey(msg, salt, a.iterations, a.memoryKB, a.threads, a.keyLen)
+	encoded := a.encode(hash, salt)
+	return encoded, nil
+}
+
 // Compare a message with a hash. Will return true if Argon2(msg) is
 // equal to the hash. Guarantees the comparison to be in constant time.
 func (a *Argon2) Compare(msg []byte, saved string) (bool, error) {
