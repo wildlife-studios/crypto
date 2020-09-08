@@ -27,6 +27,24 @@ func TestComparingArgon2Works(t *testing.T) {
 	if err != nil || equal {
 		t.Errorf("deemed messages as equals. err: %s", err)
 	}
+}
+
+func TestArgon2WithFixedSaltProducesSameOutputTwice(t *testing.T) {
+	argon2 := NewArgon2()
+	salt := []byte("YELLOW SUBMARINE")
+	text := []byte("statically typed is better than dynamically typed")
+	hash, err := argon2.HashWithFixedSalt(text, salt)
+	if err != nil {
+		t.Errorf("could not has with argon. err: %s", err)
+	}
+	other, err := argon2.HashWithFixedSalt(text, salt)
+	if err != nil {
+		t.Errorf("could not has with argon. err: %s", err)
+	}
+	if hash != other {
+		t.Errorf("hashes are different:\n%v\n%v", hash, other)
+
+	}
 
 }
 

@@ -11,12 +11,6 @@ There are three use cases.
 * Hashing random data such as tokens and UUIDs
 * Hashing non random data such as IPs and passwords
 
-Every type returned by the library has both a `Bytes()` and an `Encode()` method.
-
-You should mostly use the `Encode()` method to save the information to a permanent storage.
-`Bytes()` should only be used if you need to manually encode the bytes to keep backward compatibility.
-
-
 ### How do I encrypt/decrypt data?
 You should first generate a secret key and store it in Vault. The key must be 32 bytes long and for ease of use you can store it as a string.
 
@@ -45,7 +39,7 @@ func EncryptAndStore(id, msg string, storage Storager, vault Vaulter) error {
           return errors.New("could not encrypt")
      }
      // store the base64 encoded
-     storage.Save(id, ciphertext.Encode())
+     storage.Save(id, ciphertext)
 }
 
 
@@ -79,7 +73,7 @@ var sha512 = crypto.NewSHA512()
 
 func HashToken(user, token string, storage Storager)  {
      hash := sha512.Hash(msg)
-     storage.Save(user, hash.Encode())
+     storage.Save(user, hash)
 }
 
 func CompareToken(user, token string, storage Storager) (bool, error) {
@@ -103,7 +97,7 @@ var argon2 = crypto.NewArgon2()
 
 func HashPassword(user, token string, storage Storager)  {
      hash := argon2.Hash(msg)
-     storage.Save(user, hash.Encode())
+     storage.Save(user, hash)
 }
 
 func ComparePassword(user, token string, storage Storager) (bool, error) {
@@ -111,6 +105,21 @@ func ComparePassword(user, token string, storage Storager) (bool, error) {
      return sha512.Compare([]byte(token), saved)
 }
 ```
+
+### I need to encrypted data on my DB
+
+Due to the internals of most encryption algorithms, the output of an encrypt function is generally non-deterministic. 
+This means that Encrypt(“my message”, “my key”) will yield different results when called several times.
+
+To index encrypted data, one strategy is to use a *blind index*. Create a new column and store the hashes of data
+there. You can use the index to find the encrypted data, and decrypt it as necessary in your app.
+
+As in other instances when you need hash functions, you need to check if your data is random.
+
+If your data is random, use `SHA512` as described above.
+If your data is not random, use `Argon2` but use the `HashWithFixedSalt` method and provide a salt yourself.
+
+
 ## Benchmarks
 ```
 BenchmarkArgon2With16Bytes-12     	      73	  17387010 ns/op	67118640 B/op	      50 allocs/op
