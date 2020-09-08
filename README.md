@@ -106,7 +106,7 @@ func ComparePassword(user, token string, storage Storager) (bool, error) {
 }
 ```
 
-### I need to encrypted data on my DB
+### I need to index encrypted data on my DB
 
 Due to the internals of most encryption algorithms, the output of an encrypt function is generally non-deterministic. 
 This means that Encrypt(“my message”, “my key”) will yield different results when called several times.
