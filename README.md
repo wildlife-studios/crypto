@@ -21,7 +21,7 @@ python3 -c 'import secrets;r=secrets.token_hex(32);print(f"{{\"key\": \"{r}\"}}"
 
 Then, in your application, you can use `crypto`
 ```
-import "git.topfreegames.com/security/crypto"
+import "github.com/wildlife-studios/crypto"
 
 var cipher = crypto.NewXChacha()
 
@@ -67,7 +67,7 @@ func Retrieve(id string, storage Storager, vault Vaulter) (string, error) {
 Then just use SHA512. It is fast and simple.
 
 ```
-import "git.topfreegames.com/security/crypto"
+import "github.com/wildlife-studios/crypto"
 
 var sha512 = crypto.NewSHA512()
 
@@ -91,7 +91,7 @@ of the users.
 
 
 ```
-import "git.topfreegames.com/security/crypto"
+import "github.com/wildlife-studios/crypto"
 
 var argon2 = crypto.NewArgon2()
 
