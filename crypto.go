@@ -133,22 +133,26 @@ func (s *SHA512) Compare(msg []byte, hash []byte) bool {
 // It is safe to call the methods of Argon2 with a nil value. This will modify the pointer
 // to point to valid Argon2 struct as constructed by the NewArgon2() function.
 type Argon2 struct {
-	iterations    uint32
-	memoryKB      uint32
-	threads       uint8
+	// Iterations is called T in bibliography
+	Iterations uint32
+	// MemoryKB is called M in bibliography
+	MemoryKB      uint32
+	Threads       uint8
 	keyLen        uint32
 	saltSizeBytes int8
 }
 
-// NewArgon2 will give you an Argon2 to hash your data.
+// NewArgon2 will give you an Argon2 to hash your data. This constructor will set
+// the recommended parameters for Argon2, but you can tweak Iterations, Memory and Threads
+// to adjust them to your performance needs.
 // Argon2 is the algorithm chosen as the Key Derivation Function for Wildlife Studios.
 // Key Derivation Functions and are a subset of /ash functions which should be used to
 // hash non-random data, such as passwords, IP addresses or geolocation.
 func NewArgon2() *Argon2 {
 	return &Argon2{
-		iterations:    1,
-		memoryKB:      64 * 1024,
-		threads:       4,
+		Iterations:    1,
+		MemoryKB:      64 * 1024,
+		Threads:       4,
 		keyLen:        32,
 		saltSizeBytes: 16,
 	}
@@ -162,7 +166,7 @@ func (a *Argon2) encode(hash []byte, salt []byte) string {
 	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
 
 	format := "$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s"
-	encoded := fmt.Sprintf(format, argon2.Version, a.memoryKB, a.iterations, a.threads, b64Salt, b64Hash)
+	encoded := fmt.Sprintf(format, argon2.Version, a.MemoryKB, a.Iterations, a.Threads, b64Salt, b64Hash)
 	return encoded
 }
 
@@ -176,7 +180,7 @@ func (a *Argon2) Hash(msg []byte) (string, error) {
 	if _, err := rand.Read(salt); err != nil {
 		return "", err
 	}
-	hash := argon2.IDKey(msg, salt, a.iterations, a.memoryKB, a.threads, a.keyLen)
+	hash := argon2.IDKey(msg, salt, a.Iterations, a.MemoryKB, a.Threads, a.keyLen)
 	encoded := a.encode(hash, salt)
 	return encoded, nil
 }
@@ -192,7 +196,7 @@ func (a *Argon2) HashWithFixedSalt(msg []byte, salt []byte) (string, error) {
 	if len(salt) != int(a.saltSizeBytes) {
 		return "", fmt.Errorf("wrong salt size. expected %d, got %d", a.saltSizeBytes, len(salt))
 	}
-	hash := argon2.IDKey(msg, salt, a.iterations, a.memoryKB, a.threads, a.keyLen)
+	hash := argon2.IDKey(msg, salt, a.Iterations, a.MemoryKB, a.Threads, a.keyLen)
 	encoded := a.encode(hash, salt)
 	return encoded, nil
 }
@@ -205,7 +209,7 @@ func (a *Argon2) Compare(msg []byte, saved string) (bool, error) {
 	}
 	parts := strings.Split(saved, "$")
 	argon := Argon2{}
-	_, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &argon.memoryKB, &argon.iterations, &argon.threads)
+	_, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &argon.MemoryKB, &argon.Iterations, &argon.Threads)
 	if err != nil {
 		return false, InvalidEncodingError{err}
 	}
@@ -220,6 +224,6 @@ func (a *Argon2) Compare(msg []byte, saved string) (bool, error) {
 		return false, InvalidEncodingError{err}
 	}
 	argon.keyLen = uint32(len(old))
-	recreated := argon2.IDKey(msg, salt, argon.iterations, argon.memoryKB, argon.threads, argon.keyLen)
+	recreated := argon2.IDKey(msg, salt, argon.Iterations, argon.MemoryKB, argon.Threads, argon.keyLen)
 	return subtle.ConstantTimeCompare(old, recreated) == 1, nil
 }
